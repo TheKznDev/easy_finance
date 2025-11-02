@@ -1,5 +1,5 @@
+import 'package:financas_app/helpers/hive_helper.dart';
 import 'package:flutter/material.dart';
-import '../db/database_helper.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -11,7 +11,8 @@ class Dashboard extends StatefulWidget {
 class _DashboardState extends State<Dashboard> {
   String _selectedPeriod = 'Este Mês';
   Map<String, dynamic> _summaryData = {};
-  final dbHelper = DatabaseHelper();
+  int _numberOfDays = 1;
+  final hiveHelper = HiveHelper();
 
   @override
   void initState() {
@@ -23,24 +24,31 @@ class _DashboardState extends State<Dashboard> {
     final now = DateTime.now();
     DateTime start;
     DateTime end = now;
+    int days;
 
     switch (_selectedPeriod) {
       case 'Esta Semana':
         start = now.subtract(Duration(days: now.weekday - 1));
+        days = now.weekday;
         break;
       case 'Este Mês':
         start = DateTime(now.year, now.month, 1);
+        days = now.day;
         break;
       case 'Este Ano':
         start = DateTime(now.year, 1, 1);
+        days = now.difference(start).inDays + 1;
         break;
       default: // Desde o início
         start = DateTime(2000);
+        days = now.difference(start).inDays + 1;
+        break;
     }
 
-    final data = await dbHelper.getSummary(start, end);
+    final data = await hiveHelper.getSummary(start, end);
     setState(() {
       _summaryData = data;
+      _numberOfDays = days > 0 ? days : 1;
     });
   }
 
@@ -50,6 +58,8 @@ class _DashboardState extends State<Dashboard> {
     final double spends = _summaryData['spends'] ?? 0.0;
     final int transactionCount = _summaryData['transactionCount'] ?? 0;
     final double finalBalance = gains + spends;
+    final double avgGains = gains / _numberOfDays;
+    final double avgSpends = spends / _numberOfDays;
 
     return SafeArea(
       child: Column(
@@ -61,7 +71,7 @@ class _DashboardState extends State<Dashboard> {
               isExpanded: true,
               underline: Container(
                 height: 2,
-                color: Colors.deepOrangeAccent,
+                color: Colors.lightBlueAccent,
               ),
               items: <String>['Esta Semana', 'Este Mês', 'Este Ano', 'Desde o início']
                   .map<DropdownMenuItem<String>>((String value) {
@@ -89,13 +99,17 @@ class _DashboardState extends State<Dashboard> {
               physics: const NeverScrollableScrollPhysics(),
               children: [
                 _buildDashboardCard(
-                    'Transações', '$transactionCount', Colors.blue),
+                    'Transações', '$transactionCount', Colors.lightBlueAccent),
                 _buildDashboardCard(
-                    'Saldo Final', 'R\$ ${finalBalance.toStringAsFixed(2)}', Colors.purple),
+                    'Saldo Final', 'R\$ ${finalBalance.toStringAsFixed(2)}', Colors.lightGreen),
                 _buildDashboardCard(
                     'Ganhos', 'R\$ ${gains.toStringAsFixed(2)}', Colors.green),
                 _buildDashboardCard(
                     'Gastos', 'R\$ ${spends.toStringAsFixed(2)}', Colors.red),
+                _buildDashboardCard(
+                    'Média de Gastos', 'R\$ ${avgSpends.toStringAsFixed(2)}', Colors.red),
+                _buildDashboardCard(
+                    'Média de Ganhos', 'R\$ ${avgGains.toStringAsFixed(2)}', Colors.green),
               ],
             ),
           ),
@@ -107,7 +121,7 @@ class _DashboardState extends State<Dashboard> {
   Widget _buildDashboardCard(String title, String value, Color color) {
     return Card(
       elevation: 2,
-      color: color.withOpacity(0.15),
+      color: color.withAlpha(38),
       margin: const EdgeInsets.all(8),
       child: Center(
         child: Padding(
