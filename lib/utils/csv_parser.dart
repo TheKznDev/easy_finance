@@ -9,26 +9,38 @@ import 'package:intl/intl.dart';
 
 import '../models/transaction.dart';
 
+// Função para ler o arquivo CSV linha por linha
+Future<List<String>> lerArquivo(String filePath) async {
+  final file = File(filePath);
+  final lines = <String>[];
+
+  final stream = file
+      .openRead()
+      .transform(utf8.decoder)
+      .transform(const LineSplitter());
+
+  await for (final line in stream) {
+    lines.add(line);
+  }
+  return lines;
+}
+
 Future<void> pickAndParseCsv(BuildContext context) async {
   FilePickerResult? result = await FilePicker.platform.pickFiles(
     type: FileType.custom,
-    allowedExtensions: ['csv']
+    allowedExtensions: ['csv', 'pdf']
   );
 
   if (result != null && result.files.single.path != null) {
     try {
-      final file = File(result.files.single.path!);
+      final filePath = result.files.single.path!;
+      final lines = await lerArquivo(filePath);
       final box = Hive.box<Transaction>('transactions');
       int lineCount = 0;
       List<String> cabecalho = [];
       String delimitador = ',';
 
-      final stream = file
-          .openRead()
-          .transform(utf8.decoder)
-          .transform(const LineSplitter());
-
-      await for (final line in stream) {
+      for (final line in lines) {
         String linha = line.trim().toLowerCase();
         if (linha //Verificar cabeçalho da tabela para começar a importação
             .contains(RegExp(
@@ -66,11 +78,16 @@ Future<void> pickAndParseCsv(BuildContext context) async {
           final date = values[cabecalho.indexOf('data')];
 
           final parsedDate = DateFormat('dd/MM/yyyy').parse(date);
-          final formattedDate = DateFormat('yyyy-MM-dd').format(parsedDate);
 
           final value = (values[cabecalho.indexOf('valor')]).replaceAll('.', '').replaceAll(',', '.');
 
-          final description = values[cabecalho.indexOf('descricao')];
+          //Concatenar caso haja duas colunas descrevendo transação Ex. Compra no débito - Posto Shell
+          final indicesDescricao = [
+            for (int i = 0; i < cabecalho.length; i++)
+              if (cabecalho[i] == 'descricao') i,
+          ];
+
+          final description = indicesDescricao.map((i) => values[i]).join(' ');
 
           final transaction = Transaction();
           transaction.dt_transacao = parsedDate;
@@ -81,9 +98,6 @@ Future<void> pickAndParseCsv(BuildContext context) async {
 
           transaction.save();
         }
-
-
-
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
