@@ -79,7 +79,28 @@ Future<void> pickAndParseCsv(BuildContext context) async {
 
           final parsedDate = DateFormat('dd/MM/yyyy').parse(date);
 
-          final value = (values[cabecalho.indexOf('valor')]).replaceAll('.', '').replaceAll(',', '.');
+          // Melhor tratamento de separador decimal/milhar para valores financeiros
+          String valorBruto = values[cabecalho.indexOf('valor')].trim();
+
+          // Se o valor tem apenas um separador (ponto ou vírgula), este será o separador decimal
+          // Se tiver ambos, vírgula é o decimal e ponto é milhar
+          String value;
+          final ponto = valorBruto.contains('.');
+          final virgula = valorBruto.contains(',');
+
+          if (ponto && virgula) {
+            // Formato brasileiro: 1.234,56 -> 1234.56
+            value = valorBruto.replaceAll('.', '').replaceAll(',', '.');
+          } else if (!ponto && virgula) {
+            // 1234,56 -> 1234.56
+            value = valorBruto.replaceAll(',', '.');
+          } else if (ponto && !virgula) {
+            // 1234.56 (provavelmente vindo de export brasileiro ou internacional sem milhar)
+            value = valorBruto;
+          } else {
+            // Número inteiro: 1000
+            value = valorBruto;
+          }
 
           //Concatenar caso haja duas colunas descrevendo transação Ex. Compra no débito - Posto Shell
           final indicesDescricao = [
