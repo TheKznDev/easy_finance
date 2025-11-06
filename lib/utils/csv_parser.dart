@@ -28,7 +28,7 @@ Future<List<String>> lerArquivo(String filePath) async {
 Future<void> pickAndParseCsv(BuildContext context) async {
   FilePickerResult? result = await FilePicker.platform.pickFiles(
     type: FileType.custom,
-    allowedExtensions: ['csv', 'pdf']
+    allowedExtensions: ['csv']
   );
 
   if (result != null && result.files.single.path != null) {
