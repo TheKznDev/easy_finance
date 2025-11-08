@@ -107,9 +107,9 @@ class _DashboardState extends State<Dashboard> {
                 _buildDashboardCard(
                     'Gastos', 'R\$ ${spends.toStringAsFixed(2)}', Colors.red),
                 _buildDashboardCard(
-                    'Média de Gastos', 'R\$ ${avgSpends.toStringAsFixed(2)}', Colors.red),
+                    'Média diária de Gastos', 'R\$ ${avgSpends.toStringAsFixed(2)}', Colors.red),
                 _buildDashboardCard(
-                    'Média de Ganhos', 'R\$ ${avgGains.toStringAsFixed(2)}', Colors.green),
+                    'Média diária de Ganhos', 'R\$ ${avgGains.toStringAsFixed(2)}', Colors.green),
               ],
             ),
           ),

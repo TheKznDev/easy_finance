@@ -13,8 +13,10 @@ class MonthCarousel extends StatefulWidget {
 
 class _MonthCarouselState extends State<MonthCarousel> {
   late PageController _controller;
-  final int _initialPage = 10000; // para simular “infinito”
+  final int _initialPage = 10000;
   late DateTime _baseMonth;
+  final Set<int> _selectedIds = {}; // <- IDs selecionados
+  bool _selectionMode = false;
 
   @override
   void initState() {
@@ -36,6 +38,52 @@ class _MonthCarouselState extends State<MonthCarousel> {
         return AddTransactionForm(transaction: transaction);
       },
     );
+  }
+
+  void _toggleSelection(int key) {
+    setState(() {
+      if (_selectedIds.contains(key)) {
+        _selectedIds.remove(key);
+      } else {
+        _selectedIds.add(key);
+      }
+      _selectionMode = _selectedIds.isNotEmpty;
+    });
+  }
+
+  Future<void> _deleteSelected(BuildContext context) async {
+    if (_selectedIds.isEmpty) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Excluir transações'),
+        content: Text(
+            'Tem certeza que deseja excluir ${_selectedIds.length} transação(ões)?'),
+        actions: [
+          TextButton(
+            child: const Text('Cancelar'),
+            onPressed: () => Navigator.pop(ctx, false),
+          ),
+          ElevatedButton(
+            child: const Text('Excluir'),
+            onPressed: () => Navigator.pop(ctx, true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    final box = Hive.box<Transaction>('transactions');
+    for (final key in _selectedIds) {
+      await box.delete(key);
+    }
+
+    setState(() {
+      _selectedIds.clear();
+      _selectionMode = false;
+    });
   }
 
   @override
@@ -61,64 +109,194 @@ class _MonthCarouselState extends State<MonthCarousel> {
             ),
             Expanded(
               child: ValueListenableBuilder<Box<Transaction>>(
-                valueListenable: Hive.box<Transaction>('transactions').listenable(),
+                valueListenable:
+                    Hive.box<Transaction>('transactions').listenable(),
                 builder: (context, box, _) {
-                  final transactions = box.values.where((t) =>
-                  t.dt_transacao.month == monthDate.month &&
-                      t.dt_transacao.year == monthDate.year).toList();
+                  final transactions = box.values
+                      .where((t) =>
+                          t.dt_transacao.month == monthDate.month &&
+                          t.dt_transacao.year == monthDate.year)
+                      .toList();
 
-                  transactions.sort((a, b) => b.dt_transacao.compareTo(a.dt_transacao));
+                  transactions.sort(
+                      (a, b) => b.dt_transacao.compareTo(a.dt_transacao));
 
-                  final double total = transactions.fold(0.0, (sum, item) => sum + item.valor);
+                  final double total = transactions.fold(
+                      0.0, (sum, item) => sum + item.valor);
 
-                  return Column(
+                  if (transactions.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'Nenhuma transação neste mês 🗓️',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    );
+                  }
+
+                  return Stack(
                     children: [
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: transactions.length,
-                          itemBuilder: (context, index) {
-                            final transaction = transactions[index];
-                            return ListTile(
-                              title: Text(transaction.descricao),
-                              subtitle: Text(DateFormat('dd/MM/yyyy').format(transaction.dt_transacao)),
-                              trailing: Text('R\$ ${transaction.valor.toStringAsFixed(2)}',
-                                style: TextStyle(color: transaction.valor > 0 ? Colors.green : Colors.red),
-                              ),
-                              onTap: () => _showTransactionModal(transaction),
-                            );
-                          },
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(16.0),
-                        decoration: BoxDecoration(
-                            color: Theme.of(context).scaffoldBackgroundColor,
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 5,
-                                offset: Offset(0, -2),
-                              )
-                            ]
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Total do Mês:',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      Column(
+                        children: [
+                          Expanded(
+                            child: ListView.separated(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              itemCount: transactions.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 8),
+                              itemBuilder: (context, index) {
+                                final transaction = transactions[index];
+                                final isPositive = transaction.valor > 0;
+                                final color = isPositive ? Colors.green : Colors.red;
+                                final key = transaction.key as int;
+
+                                final selected = _selectedIds.contains(key);
+
+                                return InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onLongPress: () => _toggleSelection(key),
+                                  onTap: () {
+                                    if (_selectionMode) {
+                                      _toggleSelection(key);
+                                    } else {
+                                      _showTransactionModal(transaction);
+                                    }
+                                  },
+                                  child: Card(
+                                    elevation: selected ? 4 : 2,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      side: selected
+                                          ? BorderSide(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary,
+                                              width: 2,
+                                            )
+                                          : BorderSide.none,
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 12),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Row(
+                                              children: [
+                                                CircleAvatar(
+                                                  backgroundColor:
+                                                      color.withOpacity(0.15),
+                                                  child: Icon(
+                                                    isPositive
+                                                        ? Icons.arrow_upward
+                                                        : Icons.arrow_downward,
+                                                    color: color,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        transaction.descricao,
+                                                        style: const TextStyle(
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                        ),
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        maxLines: 1,
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        DateFormat('dd/MM/yyyy')
+                                                            .format(transaction
+                                                                .dt_transacao),
+                                                        style: const TextStyle(
+                                                          color: Colors.grey,
+                                                          fontSize: 13,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          if (_selectionMode)
+                                            Checkbox(
+                                              value: selected,
+                                              onChanged: (_) =>
+                                                  _toggleSelection(key),
+                                            )
+                                          else
+                                            Text(
+                                              'R\$ ${transaction.valor.toStringAsFixed(2)}',
+                                              style: TextStyle(
+                                                color: color,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
-                            Text(
-                              'R\$ ${total.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                                color: total >= 0 ? Colors.blue : Colors.red,
-                              ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(16.0),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).scaffoldBackgroundColor,
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black12,
+                                  blurRadius: 5,
+                                  offset: Offset(0, -2),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Total do Mês:',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18),
+                                ),
+                                Text(
+                                  'R\$ ${total.toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                    color: total >= 0
+                                        ? Colors.blue
+                                        : Colors.red,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
+                      if (_selectionMode)
+                        Positioned(
+                          bottom: 90,
+                          right: 16,
+                          child: FloatingActionButton.extended(
+                            backgroundColor: Colors.redAccent,
+                            icon: const Icon(Icons.delete),
+                            label: Text(
+                                'Excluir (${_selectedIds.length})'),
+                            onPressed: () => _deleteSelected(context),
+                          ),
+                        ),
                     ],
                   );
                 },
