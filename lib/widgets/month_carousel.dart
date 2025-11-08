@@ -5,7 +5,9 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 
 class MonthCarousel extends StatefulWidget {
-  const MonthCarousel({super.key});
+  final ValueChanged<DateTime>? onMonthChanged;
+  const MonthCarousel({super.key, this.onMonthChanged});
+  
 
   @override
   State<MonthCarousel> createState() => _MonthCarouselState();
@@ -22,7 +24,7 @@ class _MonthCarouselState extends State<MonthCarousel> {
   void initState() {
     super.initState();
     _controller = PageController(initialPage: _initialPage);
-    _baseMonth = DateTime.now();
+    _baseMonth = DateTime.now(); //Inicializa o carousel com o mês atual
   }
 
   DateTime _monthForIndex(int index) {
@@ -30,12 +32,15 @@ class _MonthCarouselState extends State<MonthCarousel> {
     return DateTime(_baseMonth.year, _baseMonth.month + diff);
   }
 
-  void _showTransactionModal(Transaction? transaction) {
+  void _showTransactionModal(Transaction? transaction, DateTime currentMonth) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (BuildContext context) {
-        return AddTransactionForm(transaction: transaction);
+        return AddTransactionForm(
+          transaction: transaction,
+          defaultMonth: currentMonth,
+        );
       },
     );
   }
@@ -88,8 +93,27 @@ class _MonthCarouselState extends State<MonthCarousel> {
 
   @override
   Widget build(BuildContext context) {
+
+@override
+    void initState() {
+      super.initState();
+      _controller = PageController(initialPage: _initialPage);
+      _baseMonth = DateTime.now();
+    }
+
+    DateTime _monthForIndex(int index) {
+      int diff = index - _initialPage;
+      return DateTime(_baseMonth.year, _baseMonth.month + diff);
+    }
+
+
     return PageView.builder(
       controller: _controller,
+        
+      onPageChanged: (index) {
+        final currentMonth = _monthForIndex(index);
+        widget.onMonthChanged?.call(currentMonth); // ✅ notifica o HomePage
+      },
       scrollDirection: Axis.horizontal,
       itemBuilder: (context, index) {
         final monthDate = _monthForIndex(index);
@@ -157,7 +181,7 @@ class _MonthCarouselState extends State<MonthCarousel> {
                                     if (_selectionMode) {
                                       _toggleSelection(key);
                                     } else {
-                                      _showTransactionModal(transaction);
+                                      _showTransactionModal(transaction, monthDate);
                                     }
                                   },
                                   child: Card(
@@ -185,7 +209,7 @@ class _MonthCarouselState extends State<MonthCarousel> {
                                               children: [
                                                 CircleAvatar(
                                                   backgroundColor:
-                                                      color.withOpacity(0.15),
+                                                      color.withAlpha(38),
                                                   child: Icon(
                                                     isPositive
                                                         ? Icons.arrow_upward

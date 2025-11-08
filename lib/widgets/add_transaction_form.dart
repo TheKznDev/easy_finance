@@ -7,8 +7,9 @@ import '../models/transaction.dart';
 
 class AddTransactionForm extends StatefulWidget {
   final Transaction? transaction;
+  final DateTime? defaultMonth;
 
-  const AddTransactionForm({super.key, this.transaction});
+  const AddTransactionForm({super.key, this.transaction, this.defaultMonth});
 
   @override
   State<AddTransactionForm> createState() => _AddTransactionFormState();
@@ -21,6 +22,7 @@ class _AddTransactionFormState extends State<AddTransactionForm> {
   final _dateController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _valueController = TextEditingController();
+  String? _descriptionError, _valueError;
 
   @override
   void initState() {
@@ -33,22 +35,42 @@ class _AddTransactionFormState extends State<AddTransactionForm> {
     } else {
       _isGain = false;
       _selectedDate = DateTime.now();
+      _selectedDate = widget.defaultMonth != null
+          ? DateTime(widget.defaultMonth!.year, widget.defaultMonth!.month, DateTime.now().day)
+          : DateTime.now();
     }
     _dateController.text = DateFormat('dd/MM/yyyy').format(_selectedDate);
   }
 
   Future<void> _saveTransaction() async {
-    final value = double.tryParse(_valueController.text.replaceAll(',', '.')) ?? 0.0;
+    final valueText = _valueController.text.trim();
+    final descriptionText = _descriptionController.text.trim();
+
+    setState(() {_descriptionError = null; _valueError = null;}); // limpa o erro anterior
+
+    final value = double.tryParse(valueText.replaceAll(',', '.')) ?? 0.0;
+
+    if (value <= 0) {
+      setState(() => _valueError = 'Informe um valor maior que zero');
+      return;
+    }
+
+    if (descriptionText.isEmpty) {
+      setState(() => _descriptionError = 'A descrição não pode estar vazia.');
+      return;
+    }
+
     final finalValue = _isGain ? value : -value;
 
     if (widget.transaction != null) {
-      widget.transaction!.descricao = _descriptionController.text;
-      widget.transaction!.valor = finalValue;
-      widget.transaction!.dt_transacao = _selectedDate;
+      widget.transaction!
+        ..descricao = descriptionText
+        ..valor = finalValue
+        ..dt_transacao = _selectedDate;
       await widget.transaction!.save();
     } else {
       final newTransaction = Transaction()
-        ..descricao = _descriptionController.text
+        ..descricao = descriptionText
         ..valor = finalValue
         ..dt_transacao = _selectedDate;
       await _hiveHelper.addTransaction(newTransaction);
@@ -68,8 +90,11 @@ class _AddTransactionFormState extends State<AddTransactionForm> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          left: 16, right: 16, top: 16),
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 16,
+        right: 16,
+        top: 16,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -77,19 +102,28 @@ class _AddTransactionFormState extends State<AddTransactionForm> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(widget.transaction == null ? 'Adicionar Transação' : 'Editar Transação',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.of(context).pop()),
+              Text(
+                widget.transaction == null ? 'Adicionar Transação' : 'Editar Transação',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
             ],
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _valueController,
-            decoration: const InputDecoration(labelText: 'Valor'),
+            decoration: InputDecoration(
+              labelText: 'Valor',
+              errorText: _valueError,
+            ),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(
-                  RegExp(r'^\d+([,.]\d{0,2})?$')),
+                RegExp(r'^\d+([,.]\d{0,2})?$'),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -97,18 +131,28 @@ class _AddTransactionFormState extends State<AddTransactionForm> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text('Gasto'),
-              Switch(value: _isGain, onChanged: (value) => setState(() => _isGain = value)),
+              Switch(
+                value: _isGain,
+                onChanged: (value) => setState(() => _isGain = value),
+              ),
               const Text('Ganho'),
             ],
           ),
           const SizedBox(height: 8),
           TextField(
             controller: _dateController,
-            decoration: const InputDecoration(labelText: 'Data', suffixIcon: Icon(Icons.calendar_today)),
+            decoration: const InputDecoration(
+              labelText: 'Data',
+              suffixIcon: Icon(Icons.calendar_today),
+            ),
             readOnly: true,
             onTap: () async {
               final DateTime? picked = await showDatePicker(
-                  context: context, initialDate: _selectedDate, firstDate: DateTime(2000), lastDate: DateTime(2101));
+                context: context,
+                initialDate: _selectedDate,
+                firstDate: DateTime(2000),
+                lastDate: DateTime(2101),
+              );
               if (picked != null && picked != _selectedDate) {
                 setState(() {
                   _selectedDate = picked;
@@ -118,7 +162,13 @@ class _AddTransactionFormState extends State<AddTransactionForm> {
             },
           ),
           const SizedBox(height: 16),
-          TextField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Descrição')),
+          TextField(
+            controller: _descriptionController,
+            decoration: InputDecoration(
+              labelText: 'Descrição',
+              errorText: _descriptionError,
+            ),
+          ),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: _saveTransaction,

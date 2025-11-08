@@ -19,16 +19,31 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   bool _isLoading = false;
 
-  final List<Widget> _pages = const [
-    Dashboard(),
-    MonthCarousel(),
-    SettingsPage(), // 👈 nova tela adicionada
-  ];
+
+  late List<Widget> _pages;
+  DateTime _currentMonth = DateTime.now();
+  @override
+  void initState() {
+    super.initState();
+
+    _pages = [
+      const Dashboard(),
+      MonthCarousel(
+        onMonthChanged: (month) {
+          _currentMonth = month; // atualiza o mês sempre que o carrossel muda
+        },
+      ),
+      const SettingsPage(),
+    ];
+  }
+
+
+  
 
   final List<String> _titles = const [
     '📊 Dashboard',
     '📅 Mês a Mês',
-    '⚙️ Mais Opções',
+    '+ Mais Opções',
   ];
 
   void _onItemTapped(int index) {
@@ -42,10 +57,14 @@ class _HomePageState extends State<HomePage> {
       context: context,
       isScrollControlled: true,
       builder: (BuildContext context) {
-        return const AddTransactionForm();
+        return AddTransactionForm(
+          // passa o mês atual apenas se estiver na aba "Mês a Mês"
+          defaultMonth: _selectedIndex == 1 ? _currentMonth : null,
+        );
       },
     );
   }
+
 
   Future<void> _pickAndParseCsvWithLoading() async {
     setState(() => _isLoading = true);
@@ -109,11 +128,16 @@ class _HomePageState extends State<HomePage> {
       child: FloatingActionButton.extended(
         key: ValueKey<int>(_selectedIndex),
         onPressed: () {
-          if (_selectedIndex == 0) {
-            _pickAndParseCsvWithLoading();
-          } else {
-            _showAddTransactionModal();
+          switch (_selectedIndex) {
+            case 0:
+              _pickAndParseCsvWithLoading();
+              break;
+
+            default:
+              _showAddTransactionModal();
+              break;
           }
+
         },
         label: Text(
           _selectedIndex == 0 ? 'Importar CSV' : 'Adicionar',

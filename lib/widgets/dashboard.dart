@@ -1,5 +1,6 @@
 import 'package:financas_app/helpers/hive_helper.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -9,41 +10,62 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
-  String _selectedPeriod = 'Este Mês';
   Map<String, dynamic> _summaryData = {};
   int _numberOfDays = 1;
   final hiveHelper = HiveHelper();
 
+  DateTimeRange? _selectedRange;
+
   @override
   void initState() {
     super.initState();
+    // Inicialmente: mostra o mês atual
+    final now = DateTime.now();
+    _selectedRange = DateTimeRange(
+      start: DateTime(now.year, now.month, 1),
+      end: now,
+    );
     _loadSummary();
   }
 
-  void _loadSummary() async {
-    final now = DateTime.now();
-    DateTime start;
-    DateTime end = now;
-    int days;
+  Future<void> _pickDateRange() async {
+    final DateTime now = DateTime.now();
 
-    switch (_selectedPeriod) {
-      case 'Esta Semana':
-        start = now.subtract(Duration(days: now.weekday - 1));
-        days = now.weekday;
-        break;
-      case 'Este Mês':
-        start = DateTime(now.year, now.month, 1);
-        days = now.day;
-        break;
-      case 'Este Ano':
-        start = DateTime(now.year, 1, 1);
-        days = now.difference(start).inDays + 1;
-        break;
-      default: // Desde o início
-        start = DateTime(2000);
-        days = now.difference(start).inDays + 1;
-        break;
+    final DateTimeRange? picked = await showDateRangePicker(
+      context: context,
+      initialDateRange: _selectedRange,
+      firstDate: DateTime(2000),
+      lastDate: now,
+      locale: const Locale('pt', 'BR'),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Theme.of(context).colorScheme.primary,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null && mounted) {
+      setState(() {
+        _selectedRange = picked;
+        _loadSummary();
+      });
     }
+  }
+
+  void _loadSummary() async {
+    if (_selectedRange == null) return;
+
+    final start = _selectedRange!.start;
+    final end = _selectedRange!.end;
+    final days = end.difference(start).inDays + 1;
 
     final data = await hiveHelper.getSummary(start, end);
     setState(() {
@@ -61,34 +83,40 @@ class _DashboardState extends State<Dashboard> {
     final double avgGains = gains / _numberOfDays;
     final double avgSpends = spends / _numberOfDays;
 
+    final dateFormat = DateFormat('dd/MM/yyyy');
+    final selectedText = _selectedRange == null
+        ? 'Selecione o período'
+        : '${dateFormat.format(_selectedRange!.start)} → ${dateFormat.format(_selectedRange!.end)}';
+
     return SafeArea(
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: DropdownButton<String>(
-              value: _selectedPeriod,
-              isExpanded: true,
-              underline: Container(
-                height: 2,
-                color: Colors.lightBlueAccent,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            child: InkWell(
+              onTap: _pickDateRange,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.blueAccent),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      selectedText,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const Icon(Icons.calendar_today, color: Colors.blueAccent),
+                  ],
+                ),
               ),
-              items: <String>['Esta Semana', 'Este Mês', 'Este Ano', 'Desde o início']
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    _selectedPeriod = newValue;
-                    _loadSummary();
-                  });
-                }
-              },
             ),
           ),
           Expanded(
@@ -98,18 +126,12 @@ class _DashboardState extends State<Dashboard> {
               childAspectRatio: 1.8,
               physics: const NeverScrollableScrollPhysics(),
               children: [
-                _buildDashboardCard(
-                    'Transações', '$transactionCount', Colors.lightBlueAccent),
-                _buildDashboardCard(
-                    'Saldo Final', 'R\$ ${finalBalance.toStringAsFixed(2)}', Colors.lightGreen),
-                _buildDashboardCard(
-                    'Ganhos', 'R\$ ${gains.toStringAsFixed(2)}', Colors.green),
-                _buildDashboardCard(
-                    'Gastos', 'R\$ ${spends.toStringAsFixed(2)}', Colors.red),
-                _buildDashboardCard(
-                    'Média diária de Gastos', 'R\$ ${avgSpends.toStringAsFixed(2)}', Colors.red),
-                _buildDashboardCard(
-                    'Média diária de Ganhos', 'R\$ ${avgGains.toStringAsFixed(2)}', Colors.green),
+                _buildDashboardCard('Transações', '$transactionCount', Colors.lightBlueAccent),
+                _buildDashboardCard('Saldo Final', 'R\$ ${finalBalance.toStringAsFixed(2)}', Colors.lightGreen),
+                _buildDashboardCard('Ganhos', 'R\$ ${gains.toStringAsFixed(2)}', Colors.green),
+                _buildDashboardCard('Gastos', 'R\$ ${spends.toStringAsFixed(2)}', Colors.red),
+                _buildDashboardCard('Média diária de Gastos', 'R\$ ${avgSpends.toStringAsFixed(2)}', Colors.red),
+                _buildDashboardCard('Média diária de Ganhos', 'R\$ ${avgGains.toStringAsFixed(2)}', Colors.green),
               ],
             ),
           ),
