@@ -1,3 +1,4 @@
+import 'package:financas_app/pages/help.dart';
 import 'package:financas_app/pages/settings_menu_page.dart';
 import 'package:financas_app/widgets/add_transaction_form.dart';
 import 'package:flutter/material.dart';
@@ -88,6 +89,19 @@ class _HomePageState extends State<HomePage> {
             ),
             centerTitle: true,
             elevation: 2,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.help_outline),
+                tooltip: 'Ajuda',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HelpPage()),
+                  );
+                },
+              ),
+
+            ],
           ),
 
           body: Stack(
