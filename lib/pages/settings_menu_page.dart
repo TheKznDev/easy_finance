@@ -1,6 +1,10 @@
 import 'package:financas_app/pages/about.dart';
+import 'package:financas_app/pages/help.dart';
+import 'package:financas_app/utils/csv_export.dart';
 import 'package:financas_app/widgets/toggle_dark_mode.dart';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -8,12 +12,12 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      {
-        'icon': Icons.upload_file,
-        'title': 'Exportar dados',
-        'subtitle': 'Salve seus registros em CSV',
-        'onTap': () => _showSnack(context, 'Exportar dados'),
-      },
+      // {
+      //   'icon': Icons.upload_file,
+      //   'title': 'Exportar dados',
+      //   'subtitle': 'Salve seus registros em CSV',
+      //   'onTap': () => _showSnack(context, 'Exportar dados'),
+      // },
       {
         'icon': Icons.dark_mode,
         'title': 'Modo escuro',
@@ -85,6 +89,36 @@ class SettingsPage extends StatelessWidget {
           },
         );
         break;
+
+        case "Exportar dados":
+          FilePicker.platform.saveFile(
+            dialogTitle: 'Salvar CSV Exportado',
+            fileName: 'transacoes_export_${DateTime.now().millisecondsSinceEpoch}.csv',
+            type: FileType.custom,
+            allowedExtensions: ['csv'],
+          ).then((selectedPath) async {
+            if (selectedPath != null) {
+              try {
+                final filePath = await exportAllTransactionsToCsv(selectedPath);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Arquivo exportado com sucesso:\n$filePath')),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Erro ao exportar CSV: $e')),
+                );
+              }
+            }
+          });
+          break;
+
+      case "Ajuda":
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => HelpPage()),
+        );
+        break;
+
 
       default:
         ScaffoldMessenger.of(context).showSnackBar(
