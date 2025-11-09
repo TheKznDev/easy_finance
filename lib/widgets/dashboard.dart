@@ -126,12 +126,12 @@ class _DashboardState extends State<Dashboard> {
               childAspectRatio: 1.8,
               physics: const NeverScrollableScrollPhysics(),
               children: [
-                _buildDashboardCard('Transações', '$transactionCount', Colors.lightBlueAccent),
-                _buildDashboardCard('Saldo Final', 'R\$ ${finalBalance.toStringAsFixed(2)}', Colors.lightGreen),
-                _buildDashboardCard('Ganhos', 'R\$ ${gains.toStringAsFixed(2)}', Colors.green),
-                _buildDashboardCard('Gastos', 'R\$ ${spends.toStringAsFixed(2)}', Colors.red),
-                _buildDashboardCard('Média diária de Gastos', 'R\$ ${avgSpends.toStringAsFixed(2)}', Colors.red),
-                _buildDashboardCard('Média diária de Ganhos', 'R\$ ${avgGains.toStringAsFixed(2)}', Colors.green),
+                _buildDashboardCard('Transações', '$transactionCount'),
+                _buildDashboardCard('Saldo Final', 'R\$ ${finalBalance.toStringAsFixed(2)}'),
+                _buildDashboardCard('Ganhos', 'R\$ ${gains.toStringAsFixed(2)}'),
+                _buildDashboardCard('Gastos', 'R\$ ${spends.toStringAsFixed(2)}'),
+                _buildDashboardCard('Média diária de Gastos', 'R\$ ${avgSpends.toStringAsFixed(2)}'),
+                _buildDashboardCard('Média diária de Ganhos', 'R\$ ${avgGains.toStringAsFixed(2)}'),
               ],
             ),
           ),
@@ -140,31 +140,33 @@ class _DashboardState extends State<Dashboard> {
     );
   }
 
-  Widget _buildDashboardCard(String title, String value, Color color) {
-    return Card(
-      elevation: 2,
-      color: color.withAlpha(38),
-      margin: const EdgeInsets.all(8),
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(title,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.black54)),
-              const SizedBox(height: 6),
-              Text(value,
-                  style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87)),
-            ],
+Widget _buildDashboardCard(String title, String value) {
+  return Card(
+    elevation: 2,
+    margin: const EdgeInsets.all(8),
+    child: Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
           ),
-        ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
+
 }
