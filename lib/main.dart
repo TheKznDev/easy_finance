@@ -26,10 +26,19 @@ class MyApp extends StatelessWidget {
       title: 'Finanças App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlueAccent),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 64, 255, 223)),
         useMaterial3: true,
       ),
 
+      darkTheme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: const Color(0xFF121212),
+          colorScheme: const ColorScheme.dark(
+          primary: Color.fromARGB(255, 58, 183, 177),
+          secondary: Colors.purpleAccent,
+        ),
+      
+      ),
+      themeMode: ThemeMode.system,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -41,6 +50,7 @@ class MyApp extends StatelessWidget {
       ],
 
       home: const HomePage(),
+      
     );
   }
 }

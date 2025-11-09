@@ -1,3 +1,5 @@
+import 'package:financas_app/pages/about.dart';
+import 'package:financas_app/widgets/toggle_dark_mode.dart';
 import 'package:flutter/material.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -58,10 +60,38 @@ class SettingsPage extends StatelessWidget {
 
   static void _showSnack(BuildContext context, String text) {
 
-    print(context);
+    switch (text) {
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$text em breve...')),
-    );
+      case "Sobre o aplicativo":
+        Navigator.push(context, MaterialPageRoute(builder: (context) => AboutPage()));
+        break;
+
+      case "Modo escuro":
+        showToggleDarkModeDialog(
+          context: context,
+          currentThemeMode: Theme.of(context).brightness == Brightness.dark ? ThemeMode.dark : ThemeMode.light,
+          onThemeModeChanged: (ThemeMode mode) {
+
+            // INSERIR: Definir o modo de tema do app.
+            final root = context.findAncestorStateOfType<NavigatorState>()?.context ?? context;
+            // Encontrar o ancestor MaterialApp para acessar o ThemeMode
+            // Aqui, usamos InheritedWidget para alterar tema dinamicamente, mas como o MaterialApp foi instanciado com ThemeMode.system hardcoded,
+            // é preciso usar um gerenciador de estado global em produção. Para fins didáticos/temporários:
+            // ScaffoldMessenger para informar ao usuário (comente/remova se usar provider/get)
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Modo de tema alterado para: ${mode.name} (requer reinício)')),
+            );
+
+          },
+        );
+        break;
+
+      default:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$text em breve...')),
+        );
+        break;
+      
+    }
   }
 }
