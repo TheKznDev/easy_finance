@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/transaction.dart';
-import '../utils/csv_parser.dart';
 import '../widgets/dashboard.dart';
 import '../widgets/month_carousel.dart';
 
@@ -18,8 +17,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
-  bool _isLoading = false;
-
 
   late List<Widget> _pages;
   DateTime _currentMonth = DateTime.now();
@@ -37,9 +34,6 @@ class _HomePageState extends State<HomePage> {
       const SettingsPage(),
     ];
   }
-
-
-  
 
   final List<String> _titles = const [
     '📊 Dashboard',
@@ -66,16 +60,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
-  Future<void> _pickAndParseCsvWithLoading() async {
-    setState(() => _isLoading = true);
-    try {
-      await pickAndParseCsv(context);
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<Box<Transaction>>(
@@ -100,68 +84,31 @@ class _HomePageState extends State<HomePage> {
                   );
                 },
               ),
-
             ],
           ),
-
-          body: Stack(
-            children: [
-              _pages[_selectedIndex],
-              if (_isLoading)
-                const Center(
-                  child: AlertDialog(
-                    content: Row(
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(width: 20),
-                        Text("Importando CSV..."),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          ),
-
+          body: _pages[_selectedIndex],
           floatingActionButton: _buildFloatingButton(context),
-
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.centerFloat,
-
+          floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
           bottomNavigationBar: _buildBottomNavigationBar(context),
         );
       },
     );
   }
 
-  Widget _buildFloatingButton(BuildContext context) {
-    // Desabilita o FAB na tela de Configurações
-    if (_selectedIndex == 2) return const SizedBox.shrink();
+  Widget? _buildFloatingButton(BuildContext context) {
+    // Only show FAB on the "Mês a Mês" screen
+    if (_selectedIndex != 1) {
+      return null;
+    }
 
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      child: FloatingActionButton.extended(
-        key: ValueKey<int>(_selectedIndex),
-        onPressed: () {
-          switch (_selectedIndex) {
-            case 0:
-              _pickAndParseCsvWithLoading();
-              break;
-
-            default:
-              _showAddTransactionModal();
-              break;
-          }
-
-        },
-        label: Text(
-          _selectedIndex == 0 ? 'Importar CSV' : 'Adicionar',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        icon: Icon(
-          _selectedIndex == 0 ? Icons.upload_file : Icons.add,
-        ),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+    return FloatingActionButton.extended(
+      onPressed: _showAddTransactionModal,
+      label: const Text(
+        'Adicionar',
+        style: TextStyle(fontWeight: FontWeight.bold),
       ),
+      icon: const Icon(Icons.add),
+      backgroundColor: Theme.of(context).colorScheme.primary,
     );
   }
 

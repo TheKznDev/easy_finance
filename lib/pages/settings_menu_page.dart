@@ -1,10 +1,10 @@
 import 'package:financas_app/pages/about.dart';
 import 'package:financas_app/pages/help.dart';
 import 'package:financas_app/utils/csv_export.dart';
+import 'package:financas_app/utils/import.dart';
 import 'package:financas_app/widgets/toggle_dark_mode.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -12,12 +12,12 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      // {
-      //   'icon': Icons.upload_file,
-      //   'title': 'Exportar dados',
-      //   'subtitle': 'Salve seus registros em CSV',
-      //   'onTap': () => _showSnack(context, 'Exportar dados'),
-      // },
+      {
+        'icon': Icons.upload_file,
+        'title': 'Importar dados csv',
+        'subtitle': 'Salve seus registros em CSV',
+        'onTap': () => _showSnack(context, 'Importar dados'),
+      },
       {
         'icon': Icons.dark_mode,
         'title': 'Modo escuro',
@@ -67,7 +67,7 @@ class SettingsPage extends StatelessWidget {
     switch (text) {
 
       case "Sobre o aplicativo":
-        Navigator.push(context, MaterialPageRoute(builder: (context) => AboutPage()));
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const AboutPage()));
         break;
 
       case "Modo escuro":
@@ -115,8 +115,12 @@ class SettingsPage extends StatelessWidget {
       case "Ajuda":
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => HelpPage()),
+          MaterialPageRoute(builder: (context) => const HelpPage()),
         );
+        break;
+
+        case "Importar dados":
+          ImportUtils.importarTransacoesCsv(context);
         break;
 
 

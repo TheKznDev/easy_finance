@@ -26,7 +26,9 @@ class MyApp extends StatelessWidget {
       title: 'Finanças App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 64, 255, 223)),
+        colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF22FFA3),
+            brightness: Brightness.light),
         useMaterial3: true,
       ),
 
