@@ -2,6 +2,7 @@ import 'package:financas_app/pages/about.dart';
 import 'package:financas_app/pages/help.dart';
 import 'package:financas_app/utils/csv_export.dart';
 import 'package:financas_app/utils/import.dart';
+import 'package:financas_app/utils/theme_manager.dart';
 import 'package:financas_app/widgets/toggle_dark_mode.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
@@ -13,10 +14,16 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = [
       {
-        'icon': Icons.upload_file,
+        'icon': Icons.upload,
         'title': 'Importar dados csv',
         'subtitle': 'Salve seus registros em CSV',
         'onTap': () => _showSnack(context, 'Importar dados'),
+      },
+      {
+        'icon': Icons.download,
+        'title': 'Exportar dados csv',
+        'subtitle': 'Exporte seus registros para um arquivo CSV',
+        'onTap': () => _showSnack(context, 'Exportar dados'),
       },
       {
         'icon': Icons.dark_mode,
@@ -63,73 +70,63 @@ class SettingsPage extends StatelessWidget {
   }
 
   static void _showSnack(BuildContext context, String text) {
-
     switch (text) {
-
-      case "Sobre o aplicativo":
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const AboutPage()));
+      case 'Sobre o aplicativo':
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => const AboutPage()));
         break;
 
-      case "Modo escuro":
+      case 'Modo escuro':
         showToggleDarkModeDialog(
           context: context,
-          currentThemeMode: Theme.of(context).brightness == Brightness.dark ? ThemeMode.dark : ThemeMode.light,
+          currentThemeMode: themeManager.themeModeNotifier.value,
           onThemeModeChanged: (ThemeMode mode) {
-
-            // INSERIR: Definir o modo de tema do app.
-            final root = context.findAncestorStateOfType<NavigatorState>()?.context ?? context;
-            // Encontrar o ancestor MaterialApp para acessar o ThemeMode
-            // Aqui, usamos InheritedWidget para alterar tema dinamicamente, mas como o MaterialApp foi instanciado com ThemeMode.system hardcoded,
-            // é preciso usar um gerenciador de estado global em produção. Para fins didáticos/temporários:
-            // ScaffoldMessenger para informar ao usuário (comente/remova se usar provider/get)
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Modo de tema alterado para: ${mode.name} (requer reinício)')),
-            );
-
+            themeManager.setThemeMode(mode);
           },
         );
         break;
 
-        case "Exportar dados":
-          FilePicker.platform.saveFile(
-            dialogTitle: 'Salvar CSV Exportado',
-            fileName: 'transacoes_export_${DateTime.now().millisecondsSinceEpoch}.csv',
-            type: FileType.custom,
-            allowedExtensions: ['csv'],
-          ).then((selectedPath) async {
-            if (selectedPath != null) {
-              try {
-                final filePath = await exportAllTransactionsToCsv(selectedPath);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Arquivo exportado com sucesso:\n$filePath')),
-                );
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Erro ao exportar CSV: $e')),
-                );
-              }
+      case 'Exportar dados':
+        FilePicker.platform
+            .saveFile(
+          dialogTitle: 'Salvar CSV Exportado',
+          fileName:
+              'transacoes_export_${DateTime.now().millisecondsSinceEpoch}.csv',
+          type: FileType.custom,
+          allowedExtensions: ['csv'],
+        )
+            .then((selectedPath) async {
+          if (selectedPath != null) {
+            try {
+              final filePath = await exportAllTransactionsToCsv(selectedPath);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Arquivo exportado com sucesso:\n$filePath')),
+              );
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Erro ao exportar CSV: $e')),
+              );
             }
-          });
-          break;
+          }
+        });
+        break;
 
-      case "Ajuda":
+      case 'Ajuda':
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const HelpPage()),
         );
         break;
 
-        case "Importar dados":
-          ImportUtils.importarTransacoesCsv(context);
+      case 'Importar dados':
+        ImportUtils.importarTransacoesCsv(context);
         break;
-
 
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('$text em breve...')),
         );
         break;
-      
     }
   }
 }
