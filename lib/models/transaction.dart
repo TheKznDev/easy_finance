@@ -15,4 +15,7 @@ class Transaction extends HiveObject {
 
   @HiveField(3)
   late DateTime dt_transacao;
+
+  @HiveField(4)
+  String? groupId;
 }

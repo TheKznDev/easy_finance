@@ -1,3 +1,4 @@
+import 'package:financas_app/models/group.dart';
 import 'package:financas_app/utils/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -11,7 +12,9 @@ Future<void> main() async {
 
   await Hive.initFlutter();
   Hive.registerAdapter(TransactionAdapter());
+  Hive.registerAdapter(GroupAdapter());
   await Hive.openBox<Transaction>('transactions');
+  await Hive.openBox<Group>('groups'); // Abrir a caixa de grupos
 
   await initializeDateFormatting('pt_BR', null);
 
