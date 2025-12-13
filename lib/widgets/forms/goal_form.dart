@@ -30,6 +30,7 @@ class _GoalFormState extends State<GoalForm> {
   void initState() {
     super.initState();
 
+    _goalDataSource = GoalDataSource();
 
     if (_isEditing) {
       _nameController.text = widget.goal!.name;
@@ -135,7 +136,7 @@ class _GoalFormState extends State<GoalForm> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Excluir Meta'),
+        title: const Text('Excluir'),
         content: const Text('Tem certeza que deseja excluir esta meta?'),
         actions: [
           TextButton(
@@ -144,7 +145,7 @@ class _GoalFormState extends State<GoalForm> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-            child: const Text('Excluir'),
+            child: const Text('Excluir', style: TextStyle(color: Colors.white)),
             onPressed: () async {
               Navigator.of(ctx).pop(); // close dialog
               if (_isEditing) {
@@ -207,7 +208,6 @@ class _GoalFormState extends State<GoalForm> {
               controller: _nameController,
               decoration: InputDecoration(
                 labelText: 'Nome da Meta',
-                prefixIcon: const Icon(Icons.flag_outlined),
                 errorText: _nameError,
               ),
               validator: (value) =>
@@ -218,7 +218,6 @@ class _GoalFormState extends State<GoalForm> {
               controller: _targetController,
               decoration: InputDecoration(
                 labelText: 'Valor da Meta (R\$)',
-                prefixIcon: const Icon(Icons.attach_money),
                 errorText: _valueError,
               ),
               keyboardType:
@@ -241,26 +240,27 @@ class _GoalFormState extends State<GoalForm> {
                   value!.isEmpty ? 'Data não pode ser vazia' : null,
             ),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.save),
-              onPressed: _saveGoal,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              label: const Text('SALVAR', style: TextStyle(fontSize: 16)),
-            ),
-            if (_isEditing)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: TextButton.icon(
-                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                  onPressed: _deleteGoal,
-                  label: const Text(
-                    'Excluir Meta',
-                    style: TextStyle(color: Colors.redAccent),
+
+            Row(
+              children: [
+                if (_isEditing) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: _deleteGoal,
+                      child: const Text('Excluir', style: TextStyle(color: Colors.red)),
+                    ),
+                  ),
+                ],
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _saveGoal,
+                    child: Text(_isEditing ? 'Salvar' : 'Adicionar'),
                   ),
                 ),
-              ),
+
+              ]
+            ),
             const SizedBox(height: 16),
           ],
         ),

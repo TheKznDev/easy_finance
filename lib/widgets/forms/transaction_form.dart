@@ -293,63 +293,73 @@ class _TransactionFormState extends State<TransactionForm> {
                           return const Center(child: CircularProgressIndicator());
                         }
                         final groups = snapshot.data!;
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Expanded(
-                              child: DropdownButtonFormField<String>(
-                                value: _selectedGroupId,
-                                decoration: const InputDecoration(
-                                  labelText: 'Vincular ao Grupo',
-                                  border: OutlineInputBorder(),
-                                ),
-                                items: [
-                                  const DropdownMenuItem<String>(
-                                    value: null,
-                                    child: Text('Nenhum'),
-                                  ),
-                                  ...groups.map((group) {
-                                    return DropdownMenuItem<String>(
-                                      value: group.id,
-                                      child: Text(group.name),
-                                    );
-                                  }),
-                                ],
-                                onChanged: (value) {
-                                  setState(() {
-                                    _selectedGroupId = value;
-                                  });
-                                },
+                            DropdownButtonFormField<String>(
+                              value: _selectedGroupId,
+                              decoration: const InputDecoration(
+                                labelText: 'Vincular ao Grupo',
+                                border: OutlineInputBorder(),
                               ),
+                              items: [
+                                const DropdownMenuItem<String>(
+                                  value: null,
+                                  child: Text('Nenhum'),
+                                ),
+                                ...groups.map((group) {
+                                  return DropdownMenuItem<String>(
+                                    value: group.id,
+                                    child: Text(group.name),
+                                  );
+                                }),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedGroupId = value;
+                                });
+                              },
                             ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: _showAddGroupForm,
-                              tooltip: 'Criar Novo Grupo',
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton.icon(
+                                onPressed: _showAddGroupForm,
+                                icon: const Icon(Icons.add, size: 18),
+                                label: const Text('Novo Grupo', style: TextStyle(fontSize: 14)),
+                              ),
                             ),
                           ],
                         );
                       },
                     ),
+
                   ],
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _saveTransaction,
-              child: Text(_isEditing ? 'Salvar' : 'Adicionar'),
-            ),
-            if (_isEditing)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: ElevatedButton(
-                  onPressed: _deleteTransaction,
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                  child: const Text('Excluir'),
+            Row(
+              children: [
+                if (_isEditing) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: _deleteTransaction,
+                      child: const Text('Excluir', style: TextStyle(color: Colors.red)),
+                    ),
+                  ),
+                ],
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _saveTransaction,
+                    child: Text(_isEditing ? 'Salvar' : 'Adicionar'),
+                  ),
                 ),
-              ),
+
+              ],
+            ),
+
             const SizedBox(height: 16),
           ],
         ),

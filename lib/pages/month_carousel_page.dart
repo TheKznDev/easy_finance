@@ -15,7 +15,7 @@ class _MonthCarouselPageState extends State<MonthCarouselPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mês a Mês'),
+        title: const Text('Extrato Mensal'),
         centerTitle: true,
       ),
       body: MonthCarousel(

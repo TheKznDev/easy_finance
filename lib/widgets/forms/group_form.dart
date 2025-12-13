@@ -1,6 +1,5 @@
 import 'package:financas_app/data/datasources/local/group_datasource.dart';
 import 'package:financas_app/models/group.dart';
-import 'package:financas_app/pages/group_details_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 

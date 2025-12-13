@@ -1,7 +1,11 @@
-import 'package:financas_app/pages/month_carousel_page.dart';
-import 'package:financas_app/pages/settings_page.dart';
+import 'package:financas_app/pages/about.dart';
 import 'package:financas_app/pages/help.dart';
+import 'package:financas_app/utils/csv_export.dart';
+import 'package:financas_app/utils/import.dart';
+import 'package:financas_app/utils/theme_manager.dart';
+import 'package:financas_app/widgets/toggle_dark_mode.dart';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({Key? key}) : super(key: key);
@@ -11,7 +15,7 @@ class AppDrawer extends StatelessWidget {
     return Drawer(
       child: Column(
         children: [
-          // HEADER com gradiente e informações do usuário
+          // HEADER
           Container(
             height: 220,
             decoration: const BoxDecoration(
@@ -19,158 +23,100 @@ class AppDrawer extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFF1B5E20), // verde escuro
-                  Color(0xFF43A047), // verde médio
+                  Color(0xFF1B5E20),
+                  Color(0xFF43A047),
                 ],
               ),
             ),
             child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Avatar e nome
-                    const Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 35,
-                          backgroundColor: Colors.white,
-                          child: Icon(
-                            Icons.person,
-                            size: 40,
-                            color: Color(0xFF1B5E20),
-                          ),
-                        ),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Usuário',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                'Modo Offline',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                child: Row(
+                  children: const [
+                    CircleAvatar(
+                      radius: 35,
+                      backgroundColor: Colors.white,
+                      child: Icon(
+                        Icons.person,
+                        size: 40,
+                        color: Color(0xFF1B5E20),
+                      ),
                     ),
-
-                    const Spacer(),
-
-                    // Card de saldo resumido
-                    // Container(
-                    //   padding: const EdgeInsets.all(12),
-                    //   decoration: BoxDecoration(
-                    //     color: Colors.white.withOpacity(0.2),
-                    //     borderRadius: BorderRadius.circular(8),
-                    //   ),
-                    //   child: const Row(
-                    //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    //     children: [
-                    //       Column(
-                    //         crossAxisAlignment: CrossAxisAlignment.start,
-                    //         children: [
-                    //           Text(
-                    //             'Saldo do Mês',
-                    //             style: TextStyle(
-                    //               color: Colors.white70,
-                    //               fontSize: 12,
-                    //             ),
-                    //           ),
-                    //           Text(
-                    //             'R\$ 0,00',
-                    //             style: TextStyle(
-                    //               color: Colors.white,
-                    //               fontSize: 20,
-                    //               fontWeight: FontWeight.bold,
-                    //             ),
-                    //           ),
-                    //         ],
-                    //       ),
-                    //       Icon(
-                    //         Icons.trending_up,
-                    //         color: Colors.white,
-                    //         size: 28,
-                    //       ),
-                    //     ],
-                    //   ),
-                    // ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Usuário',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Modo Offline',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
           ),
 
-          // MENU ITEMS
+          // MENU ITEMS SIMPLIFICADOS
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                const SizedBox(height: 8),
-
-                // NAVEGAÇÃO
-                _buildSectionHeader('NAVEGAÇÃO'),
-                _buildMenuItem(
+                _buildSectionHeader('Dados'),
+                _buildDrawerItem(
                   context,
-                  icon: Icons.home,
-                  title: 'Início',
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
+                  icon: Icons.upload,
+                  title: 'Importar CSV',
+                  onTap: () => ImportUtils.importarTransacoesCsv(context),
                 ),
-                _buildMenuItem(
+                _buildDrawerItem(
                   context,
-                  icon: Icons.calendar_month,
-                  title: 'Mês a Mês',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const MonthCarouselPage()),
-                    );
-                  },
+                  icon: Icons.download,
+                  title: 'Exportar CSV',
+                  onTap: () => _exportData(context),
                 ),
 
-                const Divider(height: 32, indent: 16, endIndent: 16),
-
-                // CONFIGURAÇÕES
-                _buildSectionHeader('CONFIGURAÇÕES'),
-                _buildMenuItem(
+                _buildSectionHeader('Aparência'),
+                _buildDrawerItem(
                   context,
-                  icon: Icons.settings,
-                  title: 'Configurações',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const SettingsPage()),
-                    );
-                  },
+                  icon: Icons.dark_mode,
+                  title: 'Tema',
+                  onTap: () => _showThemeDialog(context),
                 ),
-                _buildMenuItem(
+
+                _buildSectionHeader('Sobre'),
+                _buildDrawerItem(
                   context,
                   icon: Icons.help_outline,
                   title: 'Ajuda',
-                  onTap: () {
-                    Navigator.pop(context);
-                     Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const HelpPage()),
-                    );
-                  },
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HelpPage()),
+                  ),
+                ),
+                _buildDrawerItem(
+                  context,
+                  icon: Icons.info_outline,
+                  title: 'Sobre',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AboutPage()),
+                  ),
                 ),
               ],
             ),
@@ -179,7 +125,6 @@ class AppDrawer extends StatelessWidget {
           // FOOTER
           const Divider(height: 1),
           ListTile(
-            dense: true,
             leading: Icon(Icons.cloud_upload, color: Colors.blue[600]),
             title: Text(
               'Fazer Login',
@@ -187,10 +132,6 @@ class AppDrawer extends StatelessWidget {
                 color: Colors.blue[600],
                 fontWeight: FontWeight.w500,
               ),
-            ),
-            subtitle: const Text(
-              'Sincronizar dados na nuvem',
-              style: TextStyle(fontSize: 11),
             ),
             onTap: () {
               Navigator.pop(context);
@@ -201,10 +142,7 @@ class AppDrawer extends StatelessWidget {
             padding: EdgeInsets.all(16),
             child: Text(
               'Versão 1.0.0',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
           ),
@@ -215,7 +153,7 @@ class AppDrawer extends StatelessWidget {
 
   Widget _buildSectionHeader(String title) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
       child: Text(
         title,
         style: TextStyle(
@@ -228,25 +166,51 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuItem(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildDrawerItem(
+      BuildContext context, {
+        required IconData icon,
+        required String title,
+        VoidCallback? onTap,
+      }) {
     return ListTile(
-      leading: Icon(
-        icon,
-        color: Colors.grey[700],
+      leading: CircleAvatar(
+        backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+        child: Icon(icon, color: Theme.of(context).colorScheme.primary),
       ),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontWeight: FontWeight.normal,
-          color: Colors.grey[800],
-        ),
-      ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
       onTap: onTap,
     );
+  }
+
+  void _showThemeDialog(BuildContext context) {
+    showToggleDarkModeDialog(
+      context: context,
+      currentThemeMode: themeManager.themeModeNotifier.value,
+      onThemeModeChanged: (ThemeMode mode) {
+        themeManager.setThemeMode(mode);
+      },
+    );
+  }
+
+  void _exportData(BuildContext context) {
+    FilePicker.platform.saveFile(
+      dialogTitle: 'Salvar CSV',
+      fileName: 'transacoes_${DateTime.now().millisecondsSinceEpoch}.csv',
+      type: FileType.custom,
+      allowedExtensions: ['csv'],
+    ).then((selectedPath) async {
+      if (selectedPath != null) {
+        try {
+          final filePath = await exportAllTransactionsToCsv(selectedPath);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Exportado com sucesso:\n$filePath')),
+          );
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro: $e')),
+          );
+        }
+      }
+    });
   }
 }

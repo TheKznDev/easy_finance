@@ -75,7 +75,7 @@ class _MonthCarouselState extends State<MonthCarousel> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Excluir'),
+            child: const Text('Excluir', style: TextStyle(color: Colors.white)),
             onPressed: () => Navigator.pop(ctx, true),
           ),
         ],
