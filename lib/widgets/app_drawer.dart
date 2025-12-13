@@ -6,6 +6,8 @@ import 'package:financas_app/utils/theme_manager.dart';
 import 'package:financas_app/widgets/toggle_dark_mode.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({Key? key}) : super(key: key);
@@ -88,7 +90,7 @@ class AppDrawer extends StatelessWidget {
                   context,
                   icon: Icons.download,
                   title: 'Exportar CSV',
-                  onTap: () => _exportData(context),
+                  onTap: () => _showExportOptions(context),
                 ),
 
                 _buildSectionHeader('Aparência'),
@@ -213,4 +215,79 @@ class AppDrawer extends StatelessWidget {
       }
     });
   }
+
+  void _showExportOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.folder),
+                title: const Text('Salvar no dispositivo'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _exportAndSave(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.share),
+                title: const Text('Compartilhar'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _exportAndShare(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _exportAndShare(BuildContext context) async {
+    try {
+      final dir = await getTemporaryDirectory();
+      final filePath =
+          '${dir.path}/transacoes_${DateTime.now().millisecondsSinceEpoch}.csv';
+
+      await exportAllTransactionsToCsv(filePath);
+
+      await Share.shareXFiles(
+        [XFile(filePath)],
+        text: 'Minhas transações exportadas',
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao compartilhar CSV: $e')),
+      );
+    }
+  }
+
+
+  Future<void> _exportAndSave(BuildContext context) async {
+    final path = await FilePicker.platform.saveFile(
+      dialogTitle: 'Salvar CSV',
+      fileName: 'transacoes_${DateTime.now().millisecondsSinceEpoch}.csv',
+      type: FileType.custom,
+      allowedExtensions: ['csv'],
+    );
+
+    if (path == null) return;
+
+    try {
+      await exportAllTransactionsToCsv(path);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('CSV salvo com sucesso')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao salvar CSV: $e')),
+      );
+    }
+  }
+
+
 }

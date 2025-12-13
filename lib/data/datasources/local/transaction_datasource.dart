@@ -204,4 +204,39 @@ class TransactionDataSource {
       rethrow;
     }
   }
+
+  Future<void> updateGroup({required String transactionId, required String groupId}) async {
+    try {
+      final db = await dbHelper.database;
+      await db.update(
+        DatabaseHelper.tableTransactions,
+        {'groupId': groupId},
+        where: 'id = ?',
+        whereArgs: [transactionId],
+      );
+    } catch (e) {
+      print('Erro ao atualizar grupo da transação: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateTransactionsToGroup({
+    required String groupId,
+    required List<String> transactionIds,
+  })async {
+    try{
+      final db = await dbHelper.database;
+      for (final id in transactionIds) {
+        await db.update(
+          DatabaseHelper.tableTransactions,
+          {'groupId': groupId},
+          where: 'id = ?',
+          whereArgs: [id],);
+      }
+    } catch (e) {
+      print('Erro ao atualizar grupo das transações: $e');
+      rethrow;
+
+      }
+    }
 }
