@@ -12,7 +12,6 @@ class GroupDetailsPage extends StatelessWidget {
     // Lógica de exemplo para calcular o progresso.
     // No futuro, isso viria da soma de transações associadas.
     double currentAmount = 500.0; 
-    double percent = (currentAmount / group.targetValue).clamp(0.0, 1.0);
 
     return Scaffold(
       appBar: AppBar(
@@ -24,23 +23,12 @@ class GroupDetailsPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            LinearPercentIndicator(
-              lineHeight: 20.0,
-              percent: percent,
-              center: Text(
-                '${(percent * 100).toStringAsFixed(1)}%',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-              backgroundColor: Colors.grey.shade300,
-              progressColor: Theme.of(context).colorScheme.primary,
-              barRadius: const Radius.circular(10),
-            ),
+
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Alcançado: R\$${currentAmount.toStringAsFixed(2)}'),
-                Text('Meta: R\$${group.targetValue.toStringAsFixed(2)}'),
               ],
             ),
             const SizedBox(height: 24),

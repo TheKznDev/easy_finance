@@ -1,7 +1,7 @@
+import 'package:financas_app/models/goal.dart';
 import 'package:financas_app/models/group.dart';
 import 'package:financas_app/utils/theme_manager.dart';
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'models/transaction.dart';
@@ -9,12 +9,6 @@ import 'pages/home_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  await Hive.initFlutter();
-  Hive.registerAdapter(TransactionAdapter());
-  Hive.registerAdapter(GroupAdapter());
-  await Hive.openBox<Transaction>('transactions');
-  await Hive.openBox<Group>('groups'); // Abrir a caixa de grupos
 
   await initializeDateFormatting('pt_BR', null);
 

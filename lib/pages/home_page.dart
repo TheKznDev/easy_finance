@@ -1,5 +1,5 @@
 import 'package:financas_app/widgets/app_drawer.dart';
-import 'package:financas_app/widgets/overview_page.dart';
+import 'package:financas_app/pages/overview_page.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatelessWidget {

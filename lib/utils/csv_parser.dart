@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 
+import '../data/datasources/local/transaction_datasource.dart';
 import '../models/transaction.dart';
 
 // Função para ler o arquivo CSV linha por linha
@@ -28,34 +28,30 @@ Future<List<String>> lerArquivo(String filePath) async {
 Future<void> pickAndParseCsv(BuildContext context) async {
   FilePickerResult? result = await FilePicker.platform.pickFiles(
     type: FileType.custom,
-    allowedExtensions: ['csv']
+    allowedExtensions: ['csv'],
   );
 
   if (result != null && result.files.single.path != null) {
     try {
       final filePath = result.files.single.path!;
       final lines = await lerArquivo(filePath);
-      final box = Hive.box<Transaction>('transactions');
+      final transactionDataSource = TransactionDataSource();
       int lineCount = 0;
       List<String> cabecalho = [];
       String delimitador = ',';
 
       for (final line in lines) {
         String linha = line.trim().toLowerCase();
-        if (linha //Verificar cabeçalho da tabela para começar a importação
-            .contains(RegExp(
+        if (linha.contains(RegExp(
           r'^(?=.*\b(data|data lançamento|date)\b)'
           r'(?=.*\b(descrição|descricao|histórico|historico|lançamento|lancamento)\b)'
           r'(?=.*\bvalor\b).*$',
           caseSensitive: false,
-        ))){
-
-          linha.contains(';')? delimitador = ';' : delimitador = ',';
+        ))) {
+          linha.contains(';') ? delimitador = ';' : delimitador = ',';
           lineCount++;
 
           cabecalho = linha.split(delimitador);
-
-          //Normalizar conforme regex acima
 
           final Map<RegExp, String> normalizationMap = {
             RegExp(r'data|date'): 'data',
@@ -67,57 +63,47 @@ Future<void> pickAndParseCsv(BuildContext context) async {
             for (final entry in normalizationMap.entries) {
               if (entry.key.hasMatch(cabecalho[i])) {
                 cabecalho[i] = entry.value;
-                break; // pára no primeiro match
+                break;
               }
             }
           }
-
-        }else if (lineCount > 0) {
-          //Copiando os dados para o banco de dados
+        } else if (lineCount > 0) {
           final values = line.split(delimitador);
           final date = values[cabecalho.indexOf('data')];
 
           final parsedDate = DateFormat('dd/MM/yyyy').parse(date);
 
-          // Melhor tratamento de separador decimal/milhar para valores financeiros
           String valorBruto = values[cabecalho.indexOf('valor')].trim();
-
-          // Se o valor tem apenas um separador (ponto ou vírgula), este será o separador decimal
-          // Se tiver ambos, vírgula é o decimal e ponto é milhar
           String value;
           final ponto = valorBruto.contains('.');
           final virgula = valorBruto.contains(',');
 
           if (ponto && virgula) {
-            // Formato brasileiro: 1.234,56 -> 1234.56
             value = valorBruto.replaceAll('.', '').replaceAll(',', '.');
           } else if (!ponto && virgula) {
-            // 1234,56 -> 1234.56
             value = valorBruto.replaceAll(',', '.');
           } else if (ponto && !virgula) {
-            // 1234.56 (provavelmente vindo de export brasileiro ou internacional sem milhar)
             value = valorBruto;
           } else {
-            // Número inteiro: 1000
             value = valorBruto;
           }
 
-          //Concatenar caso haja duas colunas descrevendo transação Ex. Compra no débito - Posto Shell
           final indicesDescricao = [
             for (int i = 0; i < cabecalho.length; i++)
               if (cabecalho[i] == 'descricao') i,
           ];
 
           final description = indicesDescricao.map((i) => values[i]).join(' ');
+          final parsedValue = double.parse(value);
 
-          final transaction = Transaction();
-          transaction.dt_transacao = parsedDate;
-          transaction.valor = double.parse(value);
-          transaction.descricao = description;
+          final transaction = Transaction(
+            date: parsedDate,
+            value: parsedValue.abs(), // Salva sempre o valor absoluto
+            description: description,
+            type: parsedValue < 0 ? TransactionType.expense : TransactionType.income, // Define o tipo com base no sinal
+          );
 
-          await box.add(transaction);
-
-          transaction.save();
+          await transactionDataSource.insert(transaction);
         }
       }
 
