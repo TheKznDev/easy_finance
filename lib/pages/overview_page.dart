@@ -6,7 +6,6 @@ import 'package:financas_app/widgets/section_container.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../widgets/goals_section.dart';
 import '../widgets/summary_grid.dart';
 import '../widgets/summary_section.dart';
 
@@ -17,7 +16,8 @@ class OverviewPage extends StatefulWidget {
   State<OverviewPage> createState() => _OverviewPageState();
 }
 
-class _OverviewPageState extends State<OverviewPage> with WidgetsBindingObserver {
+class _OverviewPageState extends State<OverviewPage>
+    with WidgetsBindingObserver {
   // Future para a lista de Metas
   late Future<List<Goal>> _goalsFuture;
 
@@ -125,16 +125,6 @@ class _OverviewPageState extends State<OverviewPage> with WidgetsBindingObserver
     }
   }
 
-  // Abre o formulário de meta e recarrega os dados quando ele é fechado
-  void _showGoalForm({Goal? goal}) async {
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => GoalForm(goal: goal),
-    );
-    _refreshData(); // Garante que a UI reflita quaisquer alterações
-  }
-
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd/MM/yyyy');
@@ -144,19 +134,8 @@ class _OverviewPageState extends State<OverviewPage> with WidgetsBindingObserver
 
     return SafeArea(
       child: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 24,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         children: [
-          SectionContainer(
-            title: 'Metas',
-            child: GoalsSection(
-              goalsFuture: _goalsFuture,
-              goalDataSource: _goalDataSource,
-              onRefresh: _refreshData,
-            ),
-          ),
           const SizedBox(height: 16),
           SectionContainer(
             title: 'Resumo de Gastos',
@@ -172,12 +151,8 @@ class _OverviewPageState extends State<OverviewPage> with WidgetsBindingObserver
               accentColor: Colors.greenAccent,
             ),
           ),
-
-
         ],
       ),
     );
-
   }
-
 }

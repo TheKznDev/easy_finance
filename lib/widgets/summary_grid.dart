@@ -13,7 +13,8 @@ class SummaryGrid extends StatelessWidget {
     super.key,
     required this.summaryFuture,
     required this.accentColor,
-    type, this.onRefresh
+    type,
+    this.onRefresh,
   });
 
   @override
@@ -39,36 +40,15 @@ class SummaryGrid extends StatelessWidget {
 
         final groups = snapshot.data ?? [];
 
-        final List<Widget> cards = [
-          DashboardCard(
-            title: 'Extrato Mensal',
-            icon: Icon(
-              Icons.calendar_month,
-              size: 32,
-              color: accentColor,
-            ),
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const MonthCarouselPage(),
-                ),
-              );
-
-              onRefresh?.call();
-            },
-          ),
-        ];
+        final List<Widget> cards = [];
 
         cards.addAll(
           groups.map((group) {
-            final value = NumberFormat.simpleCurrency(locale: 'pt_BR')
-                .format(group['total']);
+            final value = NumberFormat.simpleCurrency(
+              locale: 'pt_BR',
+            ).format(group['total']);
 
-            return DashboardCard(
-              title: group['name'],
-              value: value,
-            );
+            return DashboardCard(title: group['name'], value: value);
           }),
         );
 

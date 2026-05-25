@@ -14,10 +14,6 @@ class _MonthCarouselPageState extends State<MonthCarouselPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Extrato Mensal'),
-        centerTitle: true,
-      ),
       body: MonthCarousel(
         onMonthChanged: (month) {
           setState(() {
