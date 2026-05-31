@@ -50,7 +50,12 @@ class _TransactionFormState extends State<TransactionForm> {
       _valueController.text = t.value.toStringAsFixed(2).replaceAll('.', ',');
       _selectedGoalId = t.goalId;
       _selectedGroupId = t.groupId;
-      _valueController.text = (t.value * 100).toInt().toString();
+      final centavos = (t.value * 100).toInt().toString();
+      // dispara o formatter manualmente
+      _valueController.value = _CurrencyInputFormatter().formatEditUpdate(
+        TextEditingValue.empty,
+        TextEditingValue(text: centavos),
+      );
     } else {
       _transactionType = TransactionType.expense;
       _selectedDate = widget.defaultMonth != null
