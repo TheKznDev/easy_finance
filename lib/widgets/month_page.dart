@@ -6,7 +6,6 @@ import '../models/transaction.dart';
 
 import 'package:financas_app/widgets/forms/transaction_form.dart';
 
-
 import 'group_modal.dart';
 
 class MonthPage extends StatefulWidget {
@@ -40,9 +39,7 @@ class _MonthPageState extends State<MonthPage>
       bottomNavigationBar: _buildBottomBar(),
       floatingActionButton: _selectionMode ? _buildDeleteFab() : _buildAddFab(),
     );
-
   }
-
 
   Future<List<Transaction>> _getTransactionsForMonth() async {
     final start = DateTime(widget.monthDate.year, widget.monthDate.month, 1);
@@ -52,7 +49,6 @@ class _MonthPageState extends State<MonthPage>
     list.sort((a, b) => b.date.compareTo(a.date));
     return list;
   }
-
 
   Widget _buildDeleteFab() {
     return FloatingActionButton(
@@ -70,8 +66,6 @@ class _MonthPageState extends State<MonthPage>
     );
   }
 
-
-
   Widget? _buildBottomBar() {
     return FutureBuilder<List<Transaction>>(
       future: _getTransactionsForMonth(),
@@ -80,35 +74,36 @@ class _MonthPageState extends State<MonthPage>
 
         final total = transactions.fold<double>(
           0,
-              (sum, t) =>
-          sum + (t.type == TransactionType.income ? t.value : -t.value),
+          (sum, t) =>
+              sum + (t.type == TransactionType.income ? t.value : -t.value),
         );
 
         return _selectionMode
             ? _buildSelectionBar()
             : BottomAppBar(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Saldo do Mês',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                Text(
-                  'R\$ ${total.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: total >= 0 ? Colors.blue : Colors.red,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Saldo do Mês',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        'R\$ ${total.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: total >= 0 ? Colors.blue : Colors.red,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-        );
+              );
       },
     );
   }
-
 
   Widget _buildContent() {
     final monthName = DateFormat('MMMM yyyy', 'pt_BR').format(widget.monthDate);
@@ -201,7 +196,9 @@ class _MonthPageState extends State<MonthPage>
                     Text(
                       transaction.description,
                       style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
@@ -237,7 +234,8 @@ class _MonthPageState extends State<MonthPage>
       builder: (ctx) => AlertDialog(
         title: const Text('Excluir Transações'),
         content: Text(
-            'Tem certeza que deseja excluir ${_selectedIds.length} transação(ões)?'),
+          'Tem certeza que deseja excluir ${_selectedIds.length} transação(ões)?',
+        ),
         actions: [
           TextButton(
             child: const Text('Cancelar'),
@@ -252,13 +250,16 @@ class _MonthPageState extends State<MonthPage>
       ),
     );
 
+    if (confirm != true) return;
 
+    for (final id in _selectedIds) {
+      await widget.dataSource.delete(id);
+    }
 
-
-
-
-
-
+    setState(() {
+      _selectedIds.clear();
+      _selectionMode = false;
+    });
   }
 
   void _showTransactionModal(Transaction? transaction, DateTime date) {
@@ -266,10 +267,7 @@ class _MonthPageState extends State<MonthPage>
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        return TransactionForm(
-          transaction: transaction,
-          defaultMonth: date,
-        );
+        return TransactionForm(transaction: transaction, defaultMonth: date);
       },
     ).then((_) {
       setState(() {}); // força refresh após salvar
@@ -286,6 +284,7 @@ class _MonthPageState extends State<MonthPage>
       _selectionMode = _selectedIds.isNotEmpty;
     });
   }
+
   Widget _buildSelectionBar() {
     return BottomAppBar(
       color: Colors.blue.shade700,
@@ -345,8 +344,4 @@ class _MonthPageState extends State<MonthPage>
       ),
     );
   }
-
-
-  }
-
-
+}
