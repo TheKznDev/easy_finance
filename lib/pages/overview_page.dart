@@ -98,14 +98,22 @@ class _OverviewPageState extends State<OverviewPage>
       lastDate: now,
       locale: const Locale('pt', 'BR'),
       builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Theme.of(context).colorScheme.primary,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: Theme.of(context).colorScheme.primary,
+                    onPrimary: Colors.black,
+                    surface: const Color(0xFF1E1E1E),
+                    onSurface: Colors.white,
+                  )
+                : ColorScheme.light(
+                    primary: Theme.of(context).colorScheme.primary,
+                    onPrimary: Colors.white,
+                    surface: Colors.white,
+                    onSurface: Colors.black,
+                  ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
                 foregroundColor: Theme.of(context).colorScheme.primary,
