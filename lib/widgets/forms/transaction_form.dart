@@ -47,17 +47,21 @@ class _TransactionFormState extends State<TransactionForm> {
       _transactionType = t.type;
       _selectedDate = t.date;
       _descriptionController.text = t.description;
-      _valueController.text =
-          t.value.toStringAsFixed(2).replaceAll('.', ',');
+      _valueController.text = t.value.toStringAsFixed(2).replaceAll('.', ',');
       _selectedGoalId = t.goalId;
       _selectedGroupId = t.groupId;
+      _valueController.text = (t.value * 100).toInt().toString();
     } else {
       _transactionType = TransactionType.expense;
       _selectedDate = widget.defaultMonth != null
-          ? DateTime(widget.defaultMonth!.year, widget.defaultMonth!.month,
-              DateTime.now().day)
+          ? DateTime(
+              widget.defaultMonth!.year,
+              widget.defaultMonth!.month,
+              DateTime.now().day,
+            )
           : DateTime.now();
     }
+
     _dateController.text = DateFormat('dd/MM/yyyy').format(_selectedDate);
   }
 
@@ -94,7 +98,9 @@ class _TransactionFormState extends State<TransactionForm> {
       _valueError = null;
     });
 
-    final value = double.tryParse(valueText.replaceAll(',', '.'));
+    final value = double.tryParse(
+      valueText.replaceAll('.', '').replaceAll(',', '.'),
+    );
 
     if (value == null || value <= 0) {
       setState(() => _valueError = 'Informe um valor maior que zero');
@@ -177,7 +183,10 @@ class _TransactionFormState extends State<TransactionForm> {
               children: [
                 Text(
                   _isEditing ? 'Editar Transação' : 'Adicionar Transação',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -190,13 +199,13 @@ class _TransactionFormState extends State<TransactionForm> {
               controller: _valueController,
               decoration: InputDecoration(
                 labelText: 'Valor',
+                prefixText: 'R\$ ',
                 errorText: _valueError,
               ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: TextInputType.number,
               inputFormatters: [
-                FilteringTextInputFormatter.allow(
-                  RegExp(r'^\d+([,.]\d{0,2})?$'),
-                ),
+                FilteringTextInputFormatter.digitsOnly,
+                _CurrencyInputFormatter(),
               ],
             ),
             const SizedBox(height: 16),
@@ -206,8 +215,11 @@ class _TransactionFormState extends State<TransactionForm> {
                 const Text('Gasto'),
                 Switch(
                   value: _transactionType == TransactionType.income,
-                  onChanged: (value) => setState(() => _transactionType =
-                      value ? TransactionType.income : TransactionType.expense),
+                  onChanged: (value) => setState(
+                    () => _transactionType = value
+                        ? TransactionType.income
+                        : TransactionType.expense,
+                  ),
                 ),
                 const Text('Ganho'),
               ],
@@ -230,8 +242,9 @@ class _TransactionFormState extends State<TransactionForm> {
                 if (picked != null && picked != _selectedDate) {
                   setState(() {
                     _selectedDate = picked;
-                    _dateController.text =
-                        DateFormat('dd/MM/yyyy').format(_selectedDate);
+                    _dateController.text = DateFormat(
+                      'dd/MM/yyyy',
+                    ).format(_selectedDate);
                   });
                 }
               },
@@ -256,7 +269,9 @@ class _TransactionFormState extends State<TransactionForm> {
                       future: _goalsFuture,
                       builder: (context, snapshot) {
                         if (!snapshot.hasData) {
-                          return const Center(child: CircularProgressIndicator());
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         }
                         final goals = snapshot.data!;
                         return DropdownButtonFormField<String>(
@@ -290,7 +305,9 @@ class _TransactionFormState extends State<TransactionForm> {
                       future: _groupsFuture,
                       builder: (context, snapshot) {
                         if (!snapshot.hasData) {
-                          return const Center(child: CircularProgressIndicator());
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         }
                         final groups = snapshot.data!;
                         return Column(
@@ -326,14 +343,16 @@ class _TransactionFormState extends State<TransactionForm> {
                               child: TextButton.icon(
                                 onPressed: _showAddGroupForm,
                                 icon: const Icon(Icons.add, size: 18),
-                                label: const Text('Novo Grupo', style: TextStyle(fontSize: 14)),
+                                label: const Text(
+                                  'Novo Grupo',
+                                  style: TextStyle(fontSize: 14),
+                                ),
                               ),
                             ),
                           ],
                         );
                       },
                     ),
-
                   ],
                 ),
               ],
@@ -346,7 +365,10 @@ class _TransactionFormState extends State<TransactionForm> {
                   Expanded(
                     child: TextButton(
                       onPressed: _deleteTransaction,
-                      child: const Text('Excluir', style: TextStyle(color: Colors.red)),
+                      child: const Text(
+                        'Excluir',
+                        style: TextStyle(color: Colors.red),
+                      ),
                     ),
                   ),
                 ],
@@ -356,7 +378,6 @@ class _TransactionFormState extends State<TransactionForm> {
                     child: Text(_isEditing ? 'Salvar' : 'Adicionar'),
                   ),
                 ),
-
               ],
             ),
 
@@ -365,5 +386,39 @@ class _TransactionFormState extends State<TransactionForm> {
         ),
       ),
     );
+  }
+}
+
+class _CurrencyInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) return newValue.copyWith(text: '');
+
+    final intValue = int.parse(digits);
+    final formatted = _format(intValue.toString());
+
+    return newValue.copyWith(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+
+  String _format(String digits) {
+    // Adiciona vírgula nos últimos 2 dígitos
+    var value = digits.replaceAllMapped(RegExp(r'(\d{2})$'), (m) => ',${m[1]}');
+
+    // Adiciona ponto para milhar
+    if (value.length > 6) {
+      value = value.replaceAllMapped(
+        RegExp(r'(\d{3}),(\d{2}$)'),
+        (m) => '.${m[1]},${m[2]}',
+      );
+    }
+
+    return value;
   }
 }
